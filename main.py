@@ -4,6 +4,8 @@ import csv
 import math
 import time
 import os
+from conditions import Weather, Location
+import logging
 
 # import serial # (We use RPI.GPIO)
 
@@ -23,6 +25,12 @@ OVERLAP_THRESHOLD = 1
 # How many times should we poll the luminance sensor for to get an average reading?
 LUMINANCE_RECORDINGS = 5
 
+# Camera location. Manually set this value.
+LOCATION = Location.INDOOR
+
+# Weather conditions. None if indoors. Manually set this value based on the conditions.
+WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
+
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
 
@@ -36,26 +44,37 @@ def main():
     This function performs person detection and calculates average accuracy in a video, while printing average
     luminance.
     """
+    logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
     average_luminance = measure_luminance()
     print("Average luminance:", average_luminance)
 
     model = ultralytics.YOLO(MODEL_PATH)
     cap = initialize_video_capture()
+    logging.info("Initialized video capture")
 
     detected_people = {}
     confidences = []
     output_path = "person_clips"  # Directory to store recorded clips
 
-    try:
-        detect_people(cap, model, output_path, detected_people, confidences)
-    except KeyboardInterrupt:
-        average_accuracy = sum(confidences) / len(confidences) if confidences else 0
-        print("Average accuracy:", average_accuracy)
+    detect_people(cap, model, output_path, detected_people, confidences)
+    logging.info(f"{MINUTES} minutes is over. Detection stopped.")
+    confidences = remove_zeros(confidences)
+    average_accuracy = sum(confidences) / len(confidences) if confidences else 0
 
-        save_results(average_luminance, average_accuracy, "luminance results.csv")
+    print("Average accuracy:", average_accuracy)
+    save_results(average_luminance, average_accuracy, "results.csv")
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+def remove_zeros(data):
+    """
+    Only retains non-zeros values given a list.
+    :param data: A list of confidences
+    :return: A list of only non-zero values.
+    """
+    return [x for x in data if x != 0]
 
 
 def measure_luminance():
@@ -85,10 +104,11 @@ def initialize_video_capture():
 
 
 # Function to detect people, handle overlapping bounding boxes, and record videos
-def detect_people(cap, model, output_path, detected_people, confidences):
+def detect_people(cap, model, output_path, detected_people, confidences, show_camera_preview=True):
     """
     This function detects people in frames from the video capture, handles overlapping detections,
     and records videos as needed. It operates within a loop until the specified runtime is reached.
+    :param show_camera_preview: True to show the camera preview, so we can just run in the background.
     :param cap: OpenCV cap (capture).
     :param model: YOLO model
     :param output_path: Path to store the recorded video.
@@ -102,7 +122,7 @@ def detect_people(cap, model, output_path, detected_people, confidences):
     while time.time() - start_time < RUNTIME:
         success, img = cap.read()
         if not success:
-            print("Error reading frame from camera")
+            logging.error("Error reading frame from camera")
             break
 
         results = model(img, stream=True)
@@ -118,6 +138,7 @@ def detect_people(cap, model, output_path, detected_people, confidences):
             video_format = cv2.VideoWriter_fourcc(*'XVID')  # Alternative code for fourcc
             writer = cv2.VideoWriter(f"{output_path}/person_{int(time.time())}.avi", video_format, 20.0, (640, 480))
             recording = True
+            logging.info("Recording started")
 
         if recording and writer is not None:
             writer.write(img)
@@ -125,10 +146,12 @@ def detect_people(cap, model, output_path, detected_people, confidences):
                 writer.release()
                 recording = False
 
-        draw_detections_and_info(img, detected_people)
-        cv2.imshow('Webcam', img)
+        if show_camera_preview:
+            draw_detections_and_info(img, detected_people)
+            cv2.imshow('Webcam', img)
 
         if cv2.waitKey(1) == ord('q'):
+            logging.warning("cv2 stopped (pressed 'q')")
             break
 
 
@@ -156,17 +179,20 @@ def save_results(luminance, average_accuracy, output_file):
     :param average_accuracy: The average accuracy
     :param output_file: Name of the output csv file
     """
+    global WEATHER, LOCATION
     # Check if the file exists
     if not os.path.exists(output_file):
         # Create the file and add headers
         with open(output_file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["Average Luminance", "Average Accuracy"])
+            writer.writerow(["Average Luminance", "Weather", "Location", "Average Accuracy"])
 
     # Append data to existing file
     with open(output_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([luminance, average_accuracy])
+        writer.writerow([luminance, "NULL" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
+
+    logging.info("Instance/data sample added to csv file.")
 
 
 # Function to update detected people data with unique detections and calculate confidence
