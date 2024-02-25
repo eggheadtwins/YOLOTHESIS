@@ -50,7 +50,7 @@ def main():
     confidences = []
     output_path = "person_clips"  # Directory to store recorded clips
     logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
-    
+
     average_luminance = measure_luminance()
     print("Average luminance:", average_luminance)
 
@@ -192,7 +192,7 @@ def save_results(luminance, average_accuracy, output_file):
     # Append data to existing file
     with open(output_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([luminance, "NULL" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
+        writer.writerow([luminance, "" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
 
     logging.info("Instance/data sample added to csv file.")
 
