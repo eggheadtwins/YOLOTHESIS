@@ -44,17 +44,19 @@ def main():
     This function performs person detection and calculates average accuracy in a video, while printing average
     luminance.
     """
+    global MINUTES
+
+    detected_people = {}
+    confidences = []
+    output_path = "person_clips"  # Directory to store recorded clips
     logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
+    
     average_luminance = measure_luminance()
     print("Average luminance:", average_luminance)
 
     model = ultralytics.YOLO(MODEL_PATH)
     cap = initialize_video_capture()
     logging.info("Initialized video capture")
-
-    detected_people = {}
-    confidences = []
-    output_path = "person_clips"  # Directory to store recorded clips
 
     detect_people(cap, model, output_path, detected_people, confidences)
     logging.info(f"{MINUTES} minutes is over. Detection stopped.")
@@ -174,7 +176,7 @@ def draw_detections_and_info(img, detected_people):
 # Function to save results to Excel file
 def save_results(luminance, average_accuracy, output_file):
     """
-    This function (currently commented out) would have saved the average luminance and accuracy to a CSV file,
+    This function saves the average luminance, weather, location and accuracy to a CSV file,
     :param luminance: The average luminance value.
     :param average_accuracy: The average accuracy
     :param output_file: Name of the output csv file
