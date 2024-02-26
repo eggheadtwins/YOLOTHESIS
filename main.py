@@ -234,6 +234,7 @@ def coordinates_in_int(box):
 def _calculate_confidence(box):
     """
     Calculates and rounds the confidence value from the detection based on YOLO's output format.
+    
     Mean Average Precision (mAP): This is a widely used metric that measures both precision and recall across all
     detected classes in our dataset.
     However, mAP might not be the most informative metric for your specific use case as it considers all classes,
@@ -242,7 +243,7 @@ def _calculate_confidence(box):
     Average Precision (AP): Similar to mAP but calculated for a specific class (e.g., "person").
     This provides a more focused evaluation of YOLO's effectiveness in detecting people under various conditions.
 
-    We are using confidence/accuracy as it is the same as average precision when detecting only one class. 
+    Therefore, we use confidence/accuracy as it is the same as average precision when detecting only one class.
 
     :param box: Bounding box
     :return: confidence/accuracy
