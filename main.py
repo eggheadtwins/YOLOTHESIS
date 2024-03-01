@@ -1,4 +1,4 @@
-import ultralytics
+from ultralytics import YOLO
 import cv2
 import csv
 import math
@@ -45,7 +45,6 @@ def main():
     luminance.
     """
     global MINUTES
-
     detected_people = {}
     confidences = []
     output_path = "person_clips"  # Directory to store recorded clips
@@ -54,7 +53,7 @@ def main():
     average_luminance = measure_luminance()
     print("Average luminance:", average_luminance)
 
-    model = ultralytics.YOLO(MODEL_PATH)
+    model = YOLO(MODEL_PATH)
     cap = initialize_video_capture()
     logging.info("Initialized video capture")
 
