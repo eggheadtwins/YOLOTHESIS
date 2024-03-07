@@ -1,0 +1,33 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+h1.centered-text {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.camera-container {
+    display: flex;
+    justify-content: center; /* Keeps horizontal centering */
+    align-items: flex-start; /* Change to flex-start for top alignment */
+
+}
+
+.camera-container img {
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+
+
+.centered-button {
+    display: block;
+    margin: 10px auto 10px; /* Remove top margin, adjust bottom to 10px */
+    padding: 10px 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}

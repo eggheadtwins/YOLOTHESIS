@@ -6,6 +6,7 @@ import time
 import os
 from conditions import Weather, Location
 import logging
+from flask import Flask, Response, render_template
 
 # import serial # (We use RPI.GPIO)
 
@@ -37,6 +38,11 @@ class_names = ["person"]
 # A boolean to stop the recording function to not record when already recording.
 recording = True
 
+# Flask related
+# frame = None
+running = True
+app = Flask(__name__)
+
 
 # Main function
 def main():
@@ -67,6 +73,43 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+@app.route('/')
+def video():
+    return render_template('video.html')
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+def generate_frames():
+    """
+    This function generates frames from the camera and yields them for streaming.
+    """
+    camera = cv2.VideoCapture(0)  # Change 0 to your camera device ID if needed
+    while running:
+        success, frame = camera.read()  # Read frame from the camera
+        if not success:
+            break
+        # Convert frame to bytes for streaming
+        ret, buffer = cv2.imencode('.jpg', frame)
+        frame_bytes = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+
+def stop_server():
+    global running
+    running = False
+
+
+@app.route('/stop')
+def stop():
+    stop_server()
+    return "Server stopped."
 
 
 def remove_zeros(data):
@@ -282,4 +325,7 @@ def save_img(img, cv, output_path):
 
 
 if __name__ == "__main__":
-    main()
+    # Start the Flask app
+    app.run(host='0.0.0.0', port=80, debug=True)
+
+    # main()

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Camera Stream</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1 class="centered-text">Live Camera Feed</h1>
+    <div class="camera-container">
+        <img src="{{ url_for('video_feed') }}" alt="Camera Stream" />
+    </div>
+    <button class="centered-button" onclick="stopStream()">Stop Streaming</button>
+</div>
+<script>
+    function stopStream() {
+        fetch('/stop')  // Send a request to the server to stop the stream
+            .then(response => response.text())
+            .then(data => alert(data));  // Display a success or error message
+    }
+</script>
+</body>
+</html>
