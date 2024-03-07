@@ -1,3 +1,4 @@
+from datetime import datetime
 from ultralytics import YOLO
 import cv2
 import csv
@@ -324,7 +325,7 @@ def _is_person_detection(box):
 
 
 def save_img(img, cv, output_path):
-    filename = f"{output_path}/person{int(time.time())}.jpg"
+    filename = f"{output_path}/person_{str(datetime.today())}{int(time.time())}.jpg"
     cv.imwrite(filename, img)
     log.info(f"Image saved: {filename}")
 
