@@ -35,11 +35,7 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
 
-# A boolean to stop the recording function to not record when already recording.
-recording = True
-
 # Flask related
-# frame = None
 running = True
 app = Flask(__name__)
 
