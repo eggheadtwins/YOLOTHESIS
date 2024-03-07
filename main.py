@@ -44,16 +44,25 @@ running = True
 app = Flask(__name__)
 
 
-# Main function
-def main():
+@app.route('/')
+def video():
+    return render_template('video.html')
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(stream_detect_people(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+def stream_detect_people():
     """
-    This function performs person detection and calculates average accuracy in a video, while printing average
-    luminance.
+    This function generates frames from the camera and yields them for streaming.
     """
-    global MINUTES
+    global MINUTES, RUNTIME
+
     detected_people = {}
     confidences = []
-    output_path = "person_clips"  # Directory to store recorded clips
+    output_path = "person_clips"
     logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
 
     average_luminance = measure_luminance()
@@ -62,8 +71,35 @@ def main():
     model = YOLO(MODEL_PATH)
     cap = initialize_video_capture()
     logging.info("Initialized video capture")
+    start_time = time.time()
 
-    detect_people(cap, model, output_path, detected_people, confidences)
+    while time.time() - start_time < RUNTIME:
+        success, img = cap.read()
+        if not success:
+            logging.error("Error reading frame from camera")
+            break
+
+        results = model(img, stream=True)
+        update_detected_people(results, detected_people, confidences)
+
+        if detected_people:
+            save_img(img, cv2, output_path)
+
+        if cv2.waitKey(1) == ord('q'):
+            logging.warning("cv2 stopped (pressed 'q')")
+            break
+
+        draw_detections_and_info(img, detected_people)
+
+        ret, buffer = cv2.imencode('.jpg', img)
+        bytes_frame = buffer.tobytes()
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + bytes_frame + b'\r\n')
+
+        detected_people.clear()
+        confidences.clear()
+
     logging.info(f"{MINUTES} minutes is over. Detection stopped.")
     confidences = remove_zeros(confidences)
     average_accuracy = sum(confidences) / len(confidences) if confidences else 0
@@ -73,32 +109,6 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
-
-
-@app.route('/')
-def video():
-    return render_template('video.html')
-
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
-def generate_frames():
-    """
-    This function generates frames from the camera and yields them for streaming.
-    """
-    camera = cv2.VideoCapture(0)  # Change 0 to your camera device ID if needed
-    while running:
-        success, frame = camera.read()  # Read frame from the camera
-        if not success:
-            break
-        # Convert frame to bytes for streaming
-        ret, buffer = cv2.imencode('.jpg', frame)
-        frame_bytes = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
 
 def stop_server():
@@ -145,46 +155,6 @@ def initialize_video_capture():
     cap.set(3, 640)  # Set width
     cap.set(4, 480)  # Set height
     return cap
-
-
-# Function to detect people, handle overlapping bounding boxes, and record videos
-def detect_people(cap, model, output_path, detected_people, confidences, show_camera_preview=True):
-    """
-    This function detects people in frames from the video capture, handles overlapping detections,
-    and records videos as needed. It operates within a loop until the specified runtime is reached.
-    :param show_camera_preview: True to show the camera preview, so we can just run in the background.
-    :param cap: OpenCV cap (capture).
-    :param model: YOLO model
-    :param output_path: Path to store the captured images.
-    :param detected_people: Number of detected people
-    :param confidences: A list to store all confidences
-    """
-    global RUNTIME
-
-    start_time = time.time()
-
-    while time.time() - start_time < RUNTIME:
-        success, img = cap.read()
-        if not success:
-            logging.error("Error reading frame from camera")
-            break
-
-        results = model(img, stream=True)
-        update_detected_people(results, detected_people, confidences)
-
-        if detected_people:
-            save_img(img, cv2, output_path)
-
-        if show_camera_preview:
-            draw_detections_and_info(img, detected_people)
-            cv2.imshow('Webcam', img)
-
-        if cv2.waitKey(1) == ord('q'):
-            logging.warning("cv2 stopped (pressed 'q')")
-            break
-
-        detected_people.clear()
-        confidences.clear()
 
 
 def draw_detections_and_info(img, detected_people):
@@ -326,6 +296,6 @@ def save_img(img, cv, output_path):
 
 if __name__ == "__main__":
     # Start the Flask app
-    app.run(host='0.0.0.0', port=80, debug=True)
 
+    app.run(host='0.0.0.0', port=80, debug=True)
     # main()
