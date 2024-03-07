@@ -4,6 +4,9 @@
 # Ignore idea
 /.idea
 
+# Ignore person_clips
+person_clips/
+
 # Ignore csv files
 *.csv
 
