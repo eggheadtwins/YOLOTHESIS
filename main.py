@@ -56,8 +56,11 @@ def video_feed():
 
 def stream_detect_people():
     """
-    This function generates frames from the camera and yields them for streaming.
+    Streams video frames from the camera, detects people, and saves detections.
+    :except RuntimeError: If an error occurs while reading a frame from the camera.
     """
+
+    # --- Initialization ---
     global MINUTES, RUNTIME
 
     detected_people = {}
@@ -65,6 +68,7 @@ def stream_detect_people():
     output_path = "person_clips"
     logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
 
+    # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
     print("Average luminance:", average_luminance)
 
@@ -73,15 +77,22 @@ def stream_detect_people():
     logging.info("Initialized video capture")
     start_time = time.time()
 
+    # --- Detection and streaming loop ---
     while time.time() - start_time < RUNTIME:
+        # Read a frame from the camera
         success, img = cap.read()
+
         if not success:
             logging.error("Error reading frame from camera")
             break
 
+        # Run object detection on the frame
         results = model(img, stream=True)
+
+        # Update detected people and their confidence scores
         update_detected_people(results, detected_people, confidences)
 
+        # Save frames with detected people
         if detected_people:
             save_img(img, cv2, output_path)
 
@@ -89,24 +100,34 @@ def stream_detect_people():
             logging.warning("cv2 stopped (pressed 'q')")
             break
 
+        # Draw detections and information on the frame
         draw_detections_and_info(img, detected_people)
 
+        # Encode the frame as JPEG for streaming
         ret, buffer = cv2.imencode('.jpg', img)
         bytes_frame = buffer.tobytes()
 
+        # Yield the encoded frame for streaming
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytes_frame + b'\r\n')
 
+        # Clear the detected people and confidences for the next frame
         detected_people.clear()
         confidences.clear()
 
+    # --- Wrap-up ---
     logging.info(f"{MINUTES} minutes is over. Detection stopped.")
+
+    # Calculate average accuracy (excluding zero-confidence detections)
     confidences = remove_zeros(confidences)
     average_accuracy = sum(confidences) / len(confidences) if confidences else 0
 
     print("Average accuracy:", average_accuracy)
+
+    # Save results (luminance and accuracy) to a CSV file
     save_results(average_luminance, average_accuracy, "results.csv")
 
+    # Release video capture and close any open windows
     cap.release()
     cv2.destroyAllWindows()
 
