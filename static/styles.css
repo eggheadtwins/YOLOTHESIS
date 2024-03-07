@@ -31,3 +31,7 @@ h1.centered-text {
     border-radius: 5px;
     cursor: pointer;
 }
+
+.log-container {
+    white-space: pre-wrap;
+}

@@ -4,9 +4,10 @@ import csv
 import math
 import time
 import os
+import log
+from log import web_logs
 from conditions import Weather, Location
-import logging
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, make_response
 
 # import serial # (We use RPI.GPIO)
 
@@ -36,7 +37,7 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 class_names = ["person"]
 
 # Flask related
-running = True
+running = False
 app = Flask(__name__)
 
 
@@ -62,7 +63,6 @@ def stream_detect_people():
     detected_people = {}
     confidences = []
     output_path = "person_clips"
-    logging.basicConfig(format="[%(levelname)s] - %(message)s", level=logging.INFO)
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -70,16 +70,21 @@ def stream_detect_people():
 
     model = YOLO(MODEL_PATH)
     cap = initialize_video_capture()
-    logging.info("Initialized video capture")
+    log.info("Initialized video capture")
+
+    while not running:
+        continue
+
+    log.info("Started to stream and detect")
     start_time = time.time()
 
     # --- Detection and streaming loop ---
-    while time.time() - start_time < RUNTIME:
+    while time.time() - start_time < RUNTIME and running:
         # Read a frame from the camera
         success, img = cap.read()
 
         if not success:
-            logging.error("Error reading frame from camera")
+            log.error("Error reading frame from camera")
             break
 
         # Run object detection on the frame
@@ -93,7 +98,7 @@ def stream_detect_people():
             save_img(img, cv2, output_path)
 
         if cv2.waitKey(1) == ord('q'):
-            logging.warning("cv2 stopped (pressed 'q')")
+            log.error("cv2 stopped (pressed 'q')")
             break
 
         # Draw detections and information on the frame
@@ -109,16 +114,16 @@ def stream_detect_people():
 
         # Clear the detected people and confidences for the next frame
         detected_people.clear()
-        confidences.clear()
+        # confidences.clear()
 
     # --- Wrap-up ---
-    logging.info(f"{MINUTES} minutes is over. Detection stopped.")
+    log.info(f"{MINUTES} minutes is over or manually stopped")
 
     # Calculate average accuracy (excluding zero-confidence detections)
     confidences = remove_zeros(confidences)
     average_accuracy = sum(confidences) / len(confidences) if confidences else 0
 
-    print("Average accuracy:", average_accuracy)
+    log.info(f"Average accuracy: {average_accuracy}")
 
     # Save results (luminance and accuracy) to a CSV file
     save_results(average_luminance, average_accuracy, "results.csv")
@@ -126,17 +131,30 @@ def stream_detect_people():
     # Release video capture and close any open windows
     cap.release()
     cv2.destroyAllWindows()
-
-
-def stop_server():
-    global running
-    running = False
+    log.error("OpenCV destroyed all windows (ignore if not opened)")
 
 
 @app.route('/stop')
 def stop():
-    stop_server()
+    global running
+    running = False
     return "Server stopped."
+
+
+@app.route('/start')
+def start():
+    global running
+    running = True
+    return "Server started."
+
+
+@app.route('/logs')
+def get_logs():
+    logs = '\n'.join(web_logs)  # Join logs using newline character
+    web_logs.clear()  # Clear list for next retrieval
+    response = make_response(logs)
+    response.headers['Content-Type'] = 'text/html'
+    return response
 
 
 def remove_zeros(data):
@@ -211,7 +229,7 @@ def save_results(luminance, average_accuracy, output_file):
         writer = csv.writer(csvfile)
         writer.writerow([luminance, "" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
 
-    logging.info("Instance/data sample added to csv file.")
+    log.info("Instance/data sample added to csv file.")
 
 
 # Function to update detected people data with unique detections and calculate confidence
@@ -308,9 +326,8 @@ def _is_person_detection(box):
 def save_img(img, cv, output_path):
     filename = f"{output_path}/person{int(time.time())}.jpg"
     cv.imwrite(filename, img)
-    logging.info(f"Image saved: {filename}")
+    log.info(f"Image saved: {filename}")
 
 
 if __name__ == "__main__":
-    # Start the Flask app
     app.run(host='0.0.0.0', port=80, debug=True)

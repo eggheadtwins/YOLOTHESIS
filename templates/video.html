@@ -3,20 +3,57 @@
 <head>
     <title>Camera Stream</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .log-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            height: 200px; /* Adjust height as needed */
+            overflow-y: scroll; /* Enable scrolling for long logs */
+            font-family: monospace; /* Use monospace font for better code readability */
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <h1 class="centered-text">Live Camera Feed</h1>
+    <h1 class="centered-text">Live Camera Feed with Logging</h1>
     <div class="camera-container">
         <img src="{{ url_for('video_feed') }}" alt="Camera Stream" />
     </div>
-    <button class="centered-button" onclick="stopStream()">Stop Streaming</button>
+    <button class="centered-button" onclick="startStream()">Start</button>
+    <button class="centered-button" onclick="stopStream()">Stop</button>
+
+    <div class="log-container" id="log-output"></div>
 </div>
 <script>
+    function startStream() {
+        fetch('/start')  // Send a request to the server to start the stream
+            .then(response => response.text())
+            .then(data => alert(data));  // Display a success or error message
+
+        // Start polling for logs (replace with appropriate interval)
+        setInterval(fetchLogs, 2000); // Fetch logs every 2 seconds
+    }
+
     function stopStream() {
         fetch('/stop')  // Send a request to the server to stop the stream
             .then(response => response.text())
             .then(data => alert(data));  // Display a success or error message
+
+        // Stop fetching logs
+        clearInterval(logInterval);
+    }
+
+    var logInterval; // Store the interval ID to clear it later
+
+    function fetchLogs() {
+        fetch('/logs')
+            .then(response => response.text())
+            .then(data => {
+                const logOutput = document.getElementById('log-output');
+                logOutput.innerHTML += data + '\n'; // Append new logs
+            })
+            .catch(error => console.error('Error fetching logs:', error));
     }
 </script>
 </body>
