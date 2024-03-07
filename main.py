@@ -112,14 +112,14 @@ def detect_people(cap, model, output_path, detected_people, confidences, show_ca
     :param show_camera_preview: True to show the camera preview, so we can just run in the background.
     :param cap: OpenCV cap (capture).
     :param model: YOLO model
-    :param output_path: Path to store the recorded video.
+    :param output_path: Path to store the captured images.
     :param detected_people: Number of detected people
     :param confidences: A list to store all confidences
     """
-    global RUNTIME, recording
+    global RUNTIME
 
     start_time = time.time()
-    writer = None
+
     while time.time() - start_time < RUNTIME:
         success, img = cap.read()
         if not success:
@@ -129,23 +129,8 @@ def detect_people(cap, model, output_path, detected_people, confidences, show_ca
         results = model(img, stream=True)
         update_detected_people(results, detected_people, confidences)
 
-        # Clear detections for the next frame only when recording stops
-        if not recording:
-            detected_people.clear()
-            confidences.clear()
-
-        # Start recording if a person is detected and not already recording
-        if detected_people and not recording:
-            video_format = cv2.VideoWriter_fourcc(*'XVID')  # Alternative code for fourcc
-            writer = cv2.VideoWriter(f"{output_path}/person_{int(time.time())}.avi", video_format, 20.0, (640, 480))
-            recording = True
-            logging.info("Recording started")
-
-        if recording and writer is not None:
-            writer.write(img)
-            if not detected_people:  # Stop recording if no person is detected
-                writer.release()
-                recording = False
+        if detected_people:
+            save_img(img, cv2, output_path)
 
         if show_camera_preview:
             draw_detections_and_info(img, detected_people)
@@ -154,6 +139,9 @@ def detect_people(cap, model, output_path, detected_people, confidences, show_ca
         if cv2.waitKey(1) == ord('q'):
             logging.warning("cv2 stopped (pressed 'q')")
             break
+
+        detected_people.clear()
+        confidences.clear()
 
 
 def draw_detections_and_info(img, detected_people):
@@ -285,6 +273,12 @@ def _is_person_detection(box):
     """
     global class_names
     return box.cls is not None and 0 <= box.cls[0] < len(class_names) and class_names[int(box.cls[0])] == "person"
+
+
+def save_img(img, cv, output_path):
+    filename = f"{output_path}/person{int(time.time())}.jpg"
+    cv.imwrite(filename, img)
+    logging.info(f"Image saved: {filename}")
 
 
 if __name__ == "__main__":
