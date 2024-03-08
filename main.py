@@ -67,6 +67,7 @@ def stream_detect_people():
     confidences = []
 
     initial_images_in_person_clips = count_jpgs()
+    # clear_images() # Uncomment the line if you want to delete the images at the start of each session.
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -361,6 +362,20 @@ def count_jpgs():
     """
     global OUTPUT_PATH
     return len([filename for filename in os.listdir(OUTPUT_PATH) if filename.endswith(".jpg")])
+
+
+def clear_images():
+    """
+    Removes all files from the specified directory.
+    """
+    global OUTPUT_PATH
+
+    for filename in os.listdir(OUTPUT_PATH):
+        file_path = os.path.join(OUTPUT_PATH, filename)
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            print(f"Error removing file: {file_path}. Reason: {e}")
 
 
 if __name__ == "__main__":
