@@ -42,3 +42,20 @@ h1.centered-text {
     font-family: monospace; /* Use monospace font for better code readability */
     white-space: pre-wrap;
 }
+
+.image-container {
+    margin-top: 20px; /* Add some space after the logs */
+    display: none; /* Initially hidden */
+    overflow-x: scroll; /* Enable horizontal scrolling for images */
+    white-space: nowrap; /* Prevent images from wrapping to new lines */
+}
+
+.image-container img {
+    margin: 5px; /* Add some margin between images */
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    /* Adjust width/height as needed depending on your image sizes */
+    width: 200px;
+    height: 150px;
+    object-fit: cover; /* Resize images to fit within the container */
+}

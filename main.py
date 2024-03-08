@@ -7,7 +7,7 @@ import os
 import log
 from log import web_logs
 from conditions import Weather, Location
-from flask import Flask, Response, render_template, make_response
+from flask import Flask, Response, render_template, make_response, jsonify
 
 # import serial # (We use RPI.GPIO)
 
@@ -145,6 +145,17 @@ def stop():
     log.success(f"Successfully saved {abs(initial_images_in_person_clips - count_jpgs())} images!")
 
     return "Server stopped."
+
+
+@app.route('/images')
+def get_images():
+    """
+    This function retrieves the image paths from the output directory and returns them as a JSON response.
+    """
+    global OUTPUT_PATH
+    image_paths = [os.path.join(OUTPUT_PATH, filename) for filename in os.listdir(OUTPUT_PATH) if
+                   filename.endswith(".jpg")]
+    return jsonify(image_paths)
 
 
 @app.route('/start')

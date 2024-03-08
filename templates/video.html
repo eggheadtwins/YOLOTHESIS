@@ -16,6 +16,10 @@
     <button class="centered-button" onclick="stopStream()">Stop</button>
 
     <div class="log-container" id="log-output" style="display: block;"></div>
+
+    <h2 class="centered-text">Detected People</h2>
+
+    <div class="image-container" id="image-output" style="display: none;"></div>
 </div>
 <script>
     function startStream() {
@@ -30,7 +34,12 @@
     function stopStream() {
         fetch('/stop')  // Send a request to the server to stop the stream
             .then(response => response.text())
-            .then(data => alert(data));  // Display a success or error message
+            .then(data => {
+                alert(data);  // Display a success or error message
+
+                // Display images when stream is stopped
+                fetchImages();
+            });
 
         clearInterval(logInterval);
     }
@@ -55,6 +64,27 @@
             .catch(error => console.error('Error fetching logs:', error));
     }
 
+    function fetchImages() {
+        const imageContainer = document.getElementById('image-output');
+        imageContainer.innerHTML = ''; // Clear existing images
+
+        fetch('/images') // Assuming a new route to fetch image paths
+            .then(response => response.json())  // Parse JSON response (assuming it's a list of image paths)
+            .then(data => {
+                if (data.length > 0) {
+                    imageContainer.style.display = 'block';
+
+                    for (const imagePath of data) {
+                        const imageElement = document.createElement('img');
+                        imageElement.src = imagePath;
+                        imageContainer.appendChild(imageElement);
+                    }
+                } else {
+                    imageContainer.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching images:', error));
+    }
 </script>
 </body>
 </html>
