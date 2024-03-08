@@ -1,4 +1,3 @@
-from datetime import datetime
 from ultralytics import YOLO
 import cv2
 import csv
@@ -37,6 +36,8 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
 
+images_of_detections = []
+
 # Flask related
 running = False
 app = Flask(__name__)
@@ -63,7 +64,7 @@ def stream_detect_people():
 
     detected_people = {}
     confidences = []
-    output_path = "person_clips"
+    output_path = "static/person_clips"
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -152,7 +153,6 @@ def start():
 @app.route('/logs')
 def get_logs():
     logs = '\n'.join(web_logs)  # Join logs using newline character
-    web_logs.clear()  # Clear list for next retrieval
     response = make_response(logs)
     response.headers['Content-Type'] = 'text/html'
     return response
@@ -326,9 +326,17 @@ def _is_person_detection(box):
 
 
 def save_img(img, cv, output_path):
-    filename = f"{output_path}/person_{str(datetime.today())}{int(time.time())}.jpg"
-    cv.imwrite(filename, img)
-    log.info(f"Image saved: {filename}")
+    if not os.path.exists(output_path):
+        log.error(f"{output_path} directory doesn't exist. Creating it...")
+        os.makedirs(output_path)  # Create the directory if it doesn't exist
+
+    filename = f"{output_path}/person_{time.asctime()}.jpg"
+
+    try:
+        cv.imwrite(filename, img)
+        log.info(f"Image saved: {filename}")
+    except Exception as e:
+        log.error(f"Error saving image: {e}")
 
 
 if __name__ == "__main__":

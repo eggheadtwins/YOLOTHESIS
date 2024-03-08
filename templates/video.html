@@ -15,45 +15,43 @@
     <button class="centered-button" onclick="startStream()">Start</button>
     <button class="centered-button" onclick="stopStream()">Stop</button>
 
-    <div class="log-container" id="log-output"></div>
+    <div class="log-container" id="log-output" style="display: block;"></div>
 </div>
 <script>
-    var refresh_logs = false;
-
     function startStream() {
         fetch('/start')  // Send a request to the server to start the stream
             .then(response => response.text())
             .then(data => alert(data));  // Display a success or error message
 
-        // Start polling for logs (replace with appropriate interval)
+        // Start polling for logs
         setInterval(fetchLogs, 2000); // Fetch logs every 2 seconds
-        refresh_logs = true;
     }
 
     function stopStream() {
         fetch('/stop')  // Send a request to the server to stop the stream
             .then(response => response.text())
             .then(data => alert(data));  // Display a success or error message
-
-        // Stop fetching logs
-        clearInterval(logInterval);
-        refresh_logs = false;
     }
 
     var logInterval; // Store the interval ID to clear it later
 
     function fetchLogs() {
-        if (refresh_logs) { // Check if the server is running before fetching logs
-            fetch('/logs')
-                .then(response => response.text())
-                .then(data => {
-                    const logOutput = document.getElementById('log-output');
-                    logOutput.innerHTML += data + '\n'; // Append new logs
-                    logOutput.scrollTop = logOutput.scrollHeight;
-                })
-        .catch(error => console.error('Error fetching logs:', error));
+        fetch('/logs')
+            .then(response => response.text())
+            .then(data => {
+                const logOutput = document.getElementById('log-output');
+                logOutput.innerHTML += data + '\n'; // Append new logs
+                logOutput.scrollTop = logOutput.scrollHeight;
+
+                // Check if there are logs and show/hide the container accordingly (optional)
+                if (logOutput.innerText.trim() !== '') {
+                    logOutput.style.display = 'block';
+                } else {
+                    logOutput.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching logs:', error));
     }
-}
 </script>
 </body>
 </html>
