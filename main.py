@@ -36,7 +36,7 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
 
-images_of_detections = []
+initial_images_in_person_clips = 0
 OUTPUT_PATH = "static/person_clips"
 
 # Flask related
@@ -61,10 +61,12 @@ def stream_detect_people():
     """
 
     # --- Initialization ---
-    global MINUTES, RUNTIME, OUTPUT_PATH
+    global MINUTES, RUNTIME, OUTPUT_PATH, initial_images_in_person_clips
 
     detected_people = {}
     confidences = []
+
+    initial_images_in_person_clips = count_jpgs()
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -97,8 +99,7 @@ def stream_detect_people():
 
         # Save frames with detected people
         if detected_people:
-            images_of_detections.append(img)
-            # save_img(img, cv2, output_path)
+            save_img(img, cv2, OUTPUT_PATH)
 
         if cv2.waitKey(1) == ord('q'):
             log.error("cv2 stopped (pressed 'q')")
@@ -141,13 +142,7 @@ def stream_detect_people():
 def stop():
     global running, OUTPUT_PATH
     running = False
-
-    log.info(f"Saving {len(images_of_detections)} images to static/person_clips...")
-
-    for i in images_of_detections:
-        save_img(i, cv2, OUTPUT_PATH)
-
-    log.success(f"Successfully saved all images!")
+    log.success(f"Successfully saved {abs(initial_images_in_person_clips - count_jpgs())} images!")
 
     return "Server stopped."
 
@@ -340,12 +335,21 @@ def save_img(img, cv, output_path):
         log.error(f"{output_path} directory doesn't exist. Creating it...")
         os.makedirs(output_path)  # Create the directory if it doesn't exist
 
-    filename = f"{output_path}/person_{time.asctime()}.jpg"
+    filename = f"{output_path}/person_{int(time.time())}.jpg"
 
     try:
         cv.imwrite(filename, img)
     except Exception as e:
         log.error(f"Error saving image: {e}")
+
+
+def count_jpgs():
+    """
+    Counts the number of JPG files in a given directory.
+    :return: The number of JPG files found in the directory.
+    """
+    global OUTPUT_PATH
+    return len([filename for filename in os.listdir(OUTPUT_PATH) if filename.endswith(".jpg")])
 
 
 if __name__ == "__main__":
