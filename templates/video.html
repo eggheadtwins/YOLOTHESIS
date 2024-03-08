@@ -31,6 +31,8 @@
         fetch('/stop')  // Send a request to the server to stop the stream
             .then(response => response.text())
             .then(data => alert(data));  // Display a success or error message
+
+        clearInterval(logInterval);
     }
 
     var logInterval; // Store the interval ID to clear it later
@@ -40,18 +42,19 @@
             .then(response => response.text())
             .then(data => {
                 const logOutput = document.getElementById('log-output');
-                logOutput.innerHTML += data + '\n'; // Append new logs
-                logOutput.scrollTop = logOutput.scrollHeight;
 
-                // Check if there are logs and show/hide the container accordingly (optional)
-                if (logOutput.innerText.trim() !== '') {
-                    logOutput.style.display = 'block';
-                } else {
-                    logOutput.style.display = 'none';
+                // Check if data is not empty before appending
+                if (data.trim() !== '') {
+                    logOutput.innerHTML += data + '\n';
+                    logOutput.scrollTop = logOutput.scrollHeight;
                 }
+
+                // No need to check for empty content again, update display based on current content
+                logOutput.style.display = logOutput.innerText.trim() !== '' ? 'block' : 'none';
             })
             .catch(error => console.error('Error fetching logs:', error));
     }
+
 </script>
 </body>
 </html>

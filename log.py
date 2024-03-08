@@ -1,4 +1,6 @@
-web_logs = []
+from collections import deque
+
+web_logs = deque()
 
 
 def info(message):

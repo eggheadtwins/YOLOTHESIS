@@ -37,6 +37,7 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 class_names = ["person"]
 
 images_of_detections = []
+OUTPUT_PATH = "static/person_clips"
 
 # Flask related
 running = False
@@ -60,11 +61,10 @@ def stream_detect_people():
     """
 
     # --- Initialization ---
-    global MINUTES, RUNTIME
+    global MINUTES, RUNTIME, OUTPUT_PATH
 
     detected_people = {}
     confidences = []
-    output_path = "static/person_clips"
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -97,7 +97,8 @@ def stream_detect_people():
 
         # Save frames with detected people
         if detected_people:
-            save_img(img, cv2, output_path)
+            images_of_detections.append(img)
+            # save_img(img, cv2, output_path)
 
         if cv2.waitKey(1) == ord('q'):
             log.error("cv2 stopped (pressed 'q')")
@@ -138,8 +139,16 @@ def stream_detect_people():
 
 @app.route('/stop')
 def stop():
-    global running
+    global running, OUTPUT_PATH
     running = False
+
+    log.info(f"Saving {len(images_of_detections)} images to static/person_clips...")
+
+    for i in images_of_detections:
+        save_img(i, cv2, OUTPUT_PATH)
+
+    log.success(f"Successfully saved all images!")
+
     return "Server stopped."
 
 
@@ -152,9 +161,10 @@ def start():
 
 @app.route('/logs')
 def get_logs():
-    logs = '\n'.join(web_logs)  # Join logs using newline character
+    logs = '\n'.join(list(web_logs))  # Join logs using newline character
     response = make_response(logs)
     response.headers['Content-Type'] = 'text/html'
+    web_logs.clear()
     return response
 
 
@@ -193,7 +203,7 @@ def initialize_video_capture():
     return cap
 
 
-def draw_detections_and_info(img, detected_people, display_detections=True):
+def draw_detections_and_info(img, detected_people, display_detections=False):
     """
     draws bounding boxes and confidence information for detected people on the image.
     :param display_detections: prints number of detected people if True.
@@ -334,7 +344,6 @@ def save_img(img, cv, output_path):
 
     try:
         cv.imwrite(filename, img)
-        log.info(f"Image saved: {filename}")
     except Exception as e:
         log.error(f"Error saving image: {e}")
 
