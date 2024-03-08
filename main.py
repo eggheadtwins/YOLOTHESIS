@@ -377,6 +377,8 @@ def clear_images():
         except OSError as e:
             log.error(f"Error removing file: {file_path}. Reason: {e}")
 
+    log.warn("Successfully removed all images.")
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, debug=True)
