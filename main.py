@@ -67,7 +67,7 @@ def stream_detect_people():
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
-    print("Average luminance:", average_luminance)
+    log.success(f"Average luminance: {average_luminance}")
 
     model = YOLO(MODEL_PATH)
     cap = initialize_video_capture()
@@ -113,7 +113,7 @@ def stream_detect_people():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytes_frame + b'\r\n')
 
-        # Clear the detected people and confidences for the next frame
+        # Clear the detected people for the next frame
         detected_people.clear()
         # confidences.clear()
 
@@ -124,7 +124,7 @@ def stream_detect_people():
     confidences = remove_zeros(confidences)
     average_accuracy = sum(confidences) / len(confidences) if confidences else 0
 
-    log.info(f"Average accuracy: {average_accuracy}")
+    log.success(f"Average accuracy: {average_accuracy}")
 
     # Save results (luminance and accuracy) to a CSV file
     save_results(average_luminance, average_accuracy, "results.csv")
@@ -193,9 +193,10 @@ def initialize_video_capture():
     return cap
 
 
-def draw_detections_and_info(img, detected_people):
+def draw_detections_and_info(img, detected_people, display_detections=True):
     """
     draws bounding boxes and confidence information for detected people on the image.
+    :param display_detections: prints number of detected people if True.
     :param img: the image to draw on.
     :param detected_people: dictionary storing detected people data (ID, confidence, bounding box).
 
@@ -205,8 +206,8 @@ def draw_detections_and_info(img, detected_people):
         cv2.putText(img, f"Person - Conf: {confidence:.2f}", (x1, y1),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-    if detected_people:
-        print(f"Number of people detected: {len(detected_people)}")
+    if detected_people and display_detections:
+        log.success(f"Number of people detected: {len(detected_people)}")
 
 
 # Function to save results to Excel file
@@ -230,7 +231,7 @@ def save_results(luminance, average_accuracy, output_file):
         writer = csv.writer(csvfile)
         writer.writerow([luminance, "" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
 
-    log.info("Instance/data sample added to csv file.")
+    log.success("Instance/data sample added to csv file.")
 
 
 # Function to update detected people data with unique detections and calculate confidence

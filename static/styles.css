@@ -21,8 +21,6 @@ h1.centered-text {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-
-
 .centered-button {
     display: block;
     margin: 10px auto 10px; /* Remove top margin, adjust bottom to 10px */
@@ -33,5 +31,11 @@ h1.centered-text {
 }
 
 .log-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    height: 200px; /* Adjust height as needed */
+    overflow-y: scroll; /* Enable scrolling for long logs */
+    font-family: monospace; /* Use monospace font for better code readability */
     white-space: pre-wrap;
 }
