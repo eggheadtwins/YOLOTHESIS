@@ -375,7 +375,7 @@ def clear_images():
         try:
             os.remove(file_path)
         except OSError as e:
-            print(f"Error removing file: {file_path}. Reason: {e}")
+            log.error(f"Error removing file: {file_path}. Reason: {e}")
 
 
 if __name__ == "__main__":
