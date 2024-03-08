@@ -332,7 +332,7 @@ def _is_person_detection(box):
 
 def save_img(img, cv, output_path):
     if not os.path.exists(output_path):
-        log.error(f"{output_path} directory doesn't exist. Creating it...")
+        log.warn(f"{output_path} directory doesn't exist. Creating it...")
         os.makedirs(output_path)  # Create the directory if it doesn't exist
 
     filename = f"{output_path}/person_{int(time.time())}.jpg"
