@@ -381,4 +381,5 @@ def clear_images():
 
 
 if __name__ == "__main__":
+    # openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
     app.run(ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
