@@ -1,3 +1,4 @@
+from pathlib import Path
 from ultralytics import YOLO
 import cv2
 import csv
@@ -66,8 +67,8 @@ def stream_detect_people():
     detected_people = {}
     confidences = []
 
-    initial_images_in_person_clips = count_jpgs()
     # clear_images() # Uncomment the line if you want to delete the images at the start of each session.
+    initial_images_in_person_clips = count_jpgs()
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -361,7 +362,7 @@ def count_jpgs():
     :return: The number of JPG files found in the directory.
     """
     global OUTPUT_PATH
-    return len([filename for filename in os.listdir(OUTPUT_PATH) if filename.endswith(".jpg")])
+    return len(list(Path(OUTPUT_PATH).rglob("*.jpg")))
 
 
 def clear_images():
