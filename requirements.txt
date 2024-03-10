@@ -38,3 +38,5 @@ tzdata==2024.1
 ultralytics==8.1.15
 urllib3==2.2.1
 flask~=2.2.5
+werkzeug~=2.3.8
+Flask_login~=0.6.3

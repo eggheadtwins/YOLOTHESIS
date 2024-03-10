@@ -8,7 +8,10 @@ import os
 import log
 from log import web_logs
 from conditions import Weather, Location
-from flask import Flask, Response, render_template, make_response, jsonify
+from flask import Flask, request, redirect, url_for, render_template, make_response, jsonify, Response
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 
 # import serial # (We use RPI.GPIO)
 
@@ -43,14 +46,86 @@ OUTPUT_PATH = "static/person_clips"
 # Flask related
 running = False
 app = Flask(__name__)
+app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
-@app.route('/')
+class User(UserMixin):
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def get_id(self):
+        """
+        Returns a unique identifier for the user.
+        :return: Username of the user.
+        """
+        return self.username
+
+
+@login_manager.user_loader
+def load_user(username):
+    """
+    Function to load the user object by username (Flask-Login requirement)
+    :param username: The entered username.
+    :return: The only user
+    """
+    global user
+    return user if username == user.username else None
+
+
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    """
+    This function handles login requests for the application.
+
+    It checks for the HTTP method used (GET or POST) and performs the following actions:
+
+    - GET: Renders the login form template (login.html).
+    - POST:
+        1. Extracts username and password from the form submission.
+        2. Print the result of password hash verification (for debugging purposes, can be removed).
+        3. Validates user credentials:
+            - Checks if a user is already stored in the global variable `user`.
+            - Compares the submitted username with the stored user's username.
+            - Verifies the password using the `check_password_hash` function.
+        4. If credentials are valid:
+            - Calls `login_user` function (presumably to store user session data).
+            - Redirects the user to the main page (`video` route).
+        5. If credentials are invalid:
+            - Returns an error message indicating invalid username or password.
+    """
+    global user
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        print(check_password_hash(user.password, password))
+        # Validate user credentials
+        if user and username == user.username and check_password_hash(user.password, password):
+            login_user(user)
+            log.success('Successfully logged in')
+            return redirect(url_for('video'))  # Redirect to the main page after successful login
+        return 'Invalid username or password'  # Error message on failed login
+    return render_template('login.html')  # Render login form
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+@app.route('/video')
+@login_required
 def video():
     return render_template('video.html')
 
 
 @app.route('/video_feed')
+@login_required
 def video_feed():
     return Response(stream_detect_people(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -141,6 +216,7 @@ def stream_detect_people():
 
 
 @app.route('/stop')
+@login_required
 def stop():
     global running, OUTPUT_PATH
     running = False
@@ -150,6 +226,7 @@ def stop():
 
 
 @app.route('/images')
+@login_required
 def get_images():
     """
     This function retrieves the image paths from the output directory and returns them as a JSON response.
@@ -161,6 +238,7 @@ def get_images():
 
 
 @app.route('/start')
+@login_required
 def start():
     global running
     running = True
@@ -168,6 +246,7 @@ def start():
 
 
 @app.route('/logs')
+@login_required
 def get_logs():
     logs = '\n'.join(list(web_logs))  # Join logs using newline character
     response = make_response(logs)
@@ -382,5 +461,11 @@ def clear_images():
 
 
 if __name__ == "__main__":
-    # openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+    with open("security/user.txt", "r") as f:
+        word1, word2 = f.readline().strip().split(",")
+        user = User(str(word1).replace(" ", ""), generate_password_hash(str(word2).replace(" ", "")))
+
+    login_manager.login_view = 'login'
+
+    # Command to generate the files: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
     app.run(ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
