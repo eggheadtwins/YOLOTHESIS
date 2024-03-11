@@ -40,13 +40,30 @@ WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
 
+# Number of JPEG files already present in the OUTPUT_PATH
 initial_images_in_person_clips = 0
+
+# Directory where images are stored.
 OUTPUT_PATH = "static/person_clips"
 
-# Flask related
+# A flag indicating whether to clear the images in the OUTPUT_PATH at the start of each session (video streaming).
+INITIALLY_CLEAR_IMAGES = True
+
+# -------------Flask related--------------------
+
+# A flag that controls the main loop of the video processing and detection functionality.
+# When running is True, the application will continuously capture frames from the camera,
+# detect people using the YOLO model, and save frames containing detected people.
+# When running is False, the application will stop capturing frames and processing the video stream.
 running = False
+
+# Define a Flask app name
 app = Flask(__name__)
+
+# Stores a secret key used for cryptographic purposes within the Flask application.
 app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
+
+# Holds an instance of the Flask-Login extension's LoginManager class.
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -85,15 +102,14 @@ def login():
     - GET: Renders the login form template (login.html).
     - POST:
         1. Extracts username and password from the form submission.
-        2. Print the result of password hash verification (for debugging purposes, can be removed).
-        3. Validates user credentials:
+        2. Validates user credentials:
             - Checks if a user is already stored in the global variable `user`.
             - Compares the submitted username with the stored user's username.
             - Verifies the password using the `check_password_hash` function.
-        4. If credentials are valid:
-            - Calls `login_user` function (presumably to store user session data).
+        3. If credentials are valid:
+            - Calls `login_user` function.
             - Redirects the user to the main page (`video` route).
-        5. If credentials are invalid:
+        4. If credentials are invalid:
             - Returns an error message indicating invalid username or password.
     """
     global user
@@ -101,7 +117,6 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        print(check_password_hash(user.password, password))
         # Validate user credentials
         if user and username == user.username and check_password_hash(user.password, password):
             login_user(user)
@@ -137,13 +152,15 @@ def stream_detect_people():
     """
 
     # --- Initialization ---
-    global MINUTES, RUNTIME, OUTPUT_PATH, initial_images_in_person_clips
+    global MINUTES, RUNTIME, OUTPUT_PATH, INITIALLY_CLEAR_IMAGES, initial_images_in_person_clips
 
     detected_people = {}
     confidences = []
 
-    # clear_images() # Uncomment the line if you want to delete the images at the start of each session.
-    initial_images_in_person_clips = count_jpgs()
+    if INITIALLY_CLEAR_IMAGES:
+        clear_images()
+    else:
+        initial_images_in_person_clips = count_jpgs()
 
     # Measure average luminance from the sensor.
     average_luminance = measure_luminance()
@@ -446,18 +463,29 @@ def count_jpgs():
 
 def clear_images():
     """
-    Removes all files from the specified directory.
+    Removes all JPEGs from static/person_clips directory
     """
     global OUTPUT_PATH
 
+    try:
+        os.listdir(OUTPUT_PATH)
+    except OSError as e:
+        log.error(f"Error accessing output path: {OUTPUT_PATH}. Reason: {e}")
+        return  # Exit the function if the path is invalid
+
+    num_files_removed = 0
     for filename in os.listdir(OUTPUT_PATH):
         file_path = os.path.join(OUTPUT_PATH, filename)
         try:
             os.remove(file_path)
+            num_files_removed += 1
         except OSError as e:
             log.error(f"Error removing file: {file_path}. Reason: {e}")
 
-    log.warn("Successfully removed all images.")
+    if num_files_removed > 0:
+        log.warn(f"Successfully removed {num_files_removed} previous images.")
+    else:
+        log.warn(f"No images in {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
@@ -467,5 +495,6 @@ if __name__ == "__main__":
 
     login_manager.login_view = 'login'
 
-    # Command to generate the files: openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+    # Command to generate the files:
+    # openssl req -x509 -newkey rsa:4096 -nodes -out flask_cert.pem -keyout flask_key.pem -days 365
     app.run(ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
