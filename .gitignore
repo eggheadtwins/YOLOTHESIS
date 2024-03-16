@@ -5,7 +5,7 @@
 /.idea
 
 # Ignore certificates and private keys
-security/
+#security/
 
 # Ignore person_clips
 person_clips/
