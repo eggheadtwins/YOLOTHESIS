@@ -497,4 +497,4 @@ if __name__ == "__main__":
 
     # Command to generate the files:
     # openssl req -x509 -newkey rsa:4096 -nodes -out flask_cert.pem -keyout flask_key.pem -days 365
-    app.run(ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
+    app.run(host ='0.0.0.0', ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
