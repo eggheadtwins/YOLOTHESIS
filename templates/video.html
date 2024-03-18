@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Camera Stream</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style class="log-container">
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="centered-text">Live Camera</h1>
+    <div class="camera-container">
+        <img src="{{ url_for('video_feed') }}" alt="Camera Stream"/>
+    </div>
+    <button class="centered-button" onclick="startStream()">Start</button>
+    <button class="centered-button" onclick="stopStream()">Stop</button>
+
+    <div class="log-container" id="log-output" style="display: block;"></div>
+
+    <h2 class="centered-text">Detected People</h2>
+
+    <div class="image-container" id="image-output" style="display: none;"></div>
+</div>
+<script>
+    function startStream() {
+        fetch('/start')  // Send a request to the server to start the stream
+            .then(response => response.text())
+            .then(data => alert(data));  // Display a success or error message
+
+        // Start polling for logs
+        setInterval(fetchLogs, 2000); // Fetch logs every 2 seconds
+    }
+
+    function stopStream() {
+        fetch('/stop')  // Send a request to the server to stop the stream
+            .then(response => response.text())
+            .then(data => {
+                alert(data);  // Display a success or error message
+
+                // Display images when stream is stopped
+                fetchImages();
+            });
+
+        clearInterval(logInterval);
+    }
+
+    var logInterval; // Store the interval ID to clear it later
+
+    function fetchLogs() {
+        fetch('/logs')
+            .then(response => response.text())
+            .then(data => {
+                const logOutput = document.getElementById('log-output');
+
+                // Check if data is not empty before appending
+                if (data.trim() !== '') {
+                    logOutput.innerHTML += data + '\n';
+                    logOutput.scrollTop = logOutput.scrollHeight;
+                }
+
+                // No need to check for empty content again, update display based on current content
+                logOutput.style.display = logOutput.innerText.trim() !== '' ? 'block' : 'none';
+            })
+            .catch(error => console.error('Error fetching logs:', error));
+    }
+
+    function fetchImages() {
+        const imageContainer = document.getElementById('image-output');
+        imageContainer.innerHTML = ''; // Clear existing images
+
+        fetch('/images') // Assuming a new route to fetch image paths
+            .then(response => response.json())  // Parse JSON response (assuming it's a list of image paths)
+            .then(data => {
+                if (data.length > 0) {
+                    imageContainer.style.display = 'block';
+
+                    for (const imagePath of data) {
+                        const imageElement = document.createElement('img');
+                        imageElement.src = imagePath;
+                        imageContainer.appendChild(imageElement);
+                    }
+                } else {
+                    imageContainer.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching images:', error));
+    }
+</script>
+</body>
+</html>

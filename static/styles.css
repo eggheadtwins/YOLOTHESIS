@@ -1,0 +1,118 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+h1.centered-text {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.camera-container {
+    display: flex;
+    justify-content: center; /* Keeps horizontal centering */
+    align-items: flex-start; /* Change to flex-start for top alignment */
+
+}
+
+.camera-container img {
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.centered-button {
+    display: block;
+    margin: 10px auto 10px;
+    padding: 10px 20px;
+    border: none; /* Remove border */
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Add subtle shadow */
+    background-color: #4CAF50; /* Set base color */
+    color: #fff; /* Set text color */
+}
+
+.log-container {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    height: 200px; /* Adjust height as needed */
+    overflow-y: scroll; /* Enable scrolling for long logs */
+    font-family: monospace; /* Use monospace font for better code readability */
+    white-space: pre-wrap;
+}
+
+.image-container {
+    margin-top: 20px; /* Add some space after the logs */
+    display: none; /* Initially hidden */
+    overflow-x: scroll; /* Enable horizontal scrolling for images */
+    white-space: nowrap; /* Prevent images from wrapping to new lines */
+}
+
+.image-container img {
+    margin: 5px; /* Add some margin between images */
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    /* Adjust width/height as needed depending on your image sizes */
+    width: 200px;
+    height: 150px;
+    object-fit: cover; /* Resize images to fit within the container */
+}
+
+.login-wrapper {
+    position: relative; /* For the subtle shadow effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 400px; /* Adjust width as needed */
+    height: 400px; /* Adjust height as needed */
+    background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+}
+
+.login-form-container {
+    padding: 30px;
+    background-color: #fff; /* White form background */
+    border-radius: 5px;
+    color: #333; /* Darker text for better contrast */
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+    font-size: 1.5em; /* Slightly larger heading */
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold; /* Bold labels */
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+button[type="submit"] {
+    background-color: #2ecc71; /* Green button */
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+button[type="submit"]:hover {
+    background-color: #27ae60; /* Darker green on hover */
+}

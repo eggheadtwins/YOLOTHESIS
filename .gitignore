@@ -4,6 +4,15 @@
 # Ignore idea
 /.idea
 
+# <<<<<<< YOLOTHESIS-47-authentication
+# Ignore certificates and private keys
+#security/
+
+# Ignore person_clips
+person_clips/
+
+=======
+# >>>>>>> main
 # Ignore csv files
 *.csv
 
