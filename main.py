@@ -32,10 +32,10 @@ OVERLAP_THRESHOLD = 1
 LUMINANCE_RECORDINGS = 5
 
 # Camera location. Manually set this value.
-LOCATION = Location.INDOOR
+location = None
 
 # Weather conditions. None if indoors. Manually set this value based on the conditions.
-WEATHER = None if LOCATION == Location.INDOOR else Weather.SUNNY
+WEATHER = None if location == Location.INDOOR else Weather.SUNNY
 
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
@@ -79,6 +79,25 @@ class User(UserMixin):
         :return: Username of the user.
         """
         return self.username
+
+
+@app.route('/set_location', methods=['POST'])
+@login_required
+def set_location():
+    global location
+
+    # Extract the location from the request body
+    data = request.get_json()
+    if data and 'location' in data:
+        selected_location = data['location']
+        try:
+            # Convert the string value to the corresponding Location enum member
+            location = Location(selected_location)
+            return "Location updated successfully."
+        except ValueError:
+            return "Invalid location selection.", 400  # Bad request
+
+    return "Error updating location.", 400  # Bad request
 
 
 @login_manager.user_loader
@@ -257,7 +276,8 @@ def get_images():
 @app.route('/start')
 @login_required
 def start():
-    global running
+    global running, location
+    log.success(f"Location set to {location.value}")
     running = True
     return "Server started."
 
@@ -332,7 +352,7 @@ def save_results(luminance, average_accuracy, output_file):
     :param average_accuracy: The average accuracy
     :param output_file: Name of the output csv file
     """
-    global WEATHER, LOCATION
+    global WEATHER, location
     # Check if the file exists
     if not os.path.exists(output_file):
         # Create the file and add headers
@@ -343,7 +363,7 @@ def save_results(luminance, average_accuracy, output_file):
     # Append data to existing file
     with open(output_file, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([luminance, "" if WEATHER is None else WEATHER.value, LOCATION.value, average_accuracy])
+        writer.writerow([luminance, "" if WEATHER is None else WEATHER.value, location.value, average_accuracy])
 
     log.success("Instance/data sample added to csv file.")
 
