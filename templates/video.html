@@ -15,15 +15,29 @@
     <button class="centered-button" onclick="startStream()">Start</button>
     <button class="centered-button" onclick="stopStream()">Stop</button>
 
-    <form id="location-form" method="POST" action="/set_location">
-        <div class="form-group">
-            <label for="location">Location:</label>
-            <select id="location" name="location">
-                <option value="Indoor">Indoor</option>
-                <option value="Outdoor">Outdoor</option>
-            </select>
-        </div>
-    </form>
+    <div class="form-container">
+        <form id="location-form" method="POST" action="/set_location">
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <select id="location" name="location">
+                    <option value="Indoor">Indoor</option>
+                    <option value="Outdoor">Outdoor</option>
+                </select>
+            </div>
+        </form>
+
+        <form id="weather-form" method="POST" action="/set_weather">
+            <div class="form-group">
+                <label for="weather">Weather:</label>
+                <select id="weather" name="weather">
+                    <option value="Sunny">Sunny</option>
+                    <option value="Rainy">Rainy</option>
+                    <option value="Fog">Fog</option>
+                    <option value="Snow">Snow</option>
+                </select>
+            </div>
+        </form>
+    </div>
 
     <div class="log-container" id="log-output" style="display: block;"></div>
 
@@ -104,6 +118,19 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ location: selectedLocation })
+        })
+        .then(response => response.text())
+        .then(data => alert(data)); // Display success or error message
+    });
+
+    const weatherForm = document.getElementById('weather-form');
+    weatherForm.addEventListener('change', () => {
+        const selectedWeather = document.getElementById('weather').value;
+
+        fetch('/set_weather', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ weather: selectedWeather })
         })
         .then(response => response.text())
         .then(data => alert(data)); // Display success or error message

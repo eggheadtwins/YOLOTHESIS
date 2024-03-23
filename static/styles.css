@@ -116,3 +116,13 @@ button[type="submit"] {
 button[type="submit"]:hover {
     background-color: #27ae60; /* Darker green on hover */
 }
+
+.form-container {
+    overflow: hidden; /* Needed for proper float behavior */
+}
+
+.form-container form {
+    float: left;
+    width: 5%; /* Adjust width as needed */
+    margin: 0 10px; /* Add spacing between forms */
+}
