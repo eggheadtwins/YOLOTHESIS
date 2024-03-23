@@ -79,42 +79,28 @@ class User(UserMixin):
         return self.username
 
 
+def update_value(value_name, enum_type):
+    try:
+        data = request.get_json()
+        if data and value_name in data:
+            selected_value = data[value_name]
+            enum_type(selected_value)  # Validate by attempting conversion
+            globals()[value_name] = enum_type(selected_value)
+            return f"{value_name.capitalize()} updated successfully."
+    except ValueError:
+        return f"Invalid {value_name} selection.", 400
+
+
 @app.route('/set_location', methods=['POST'])
 @login_required
 def set_location():
-    global location
-
-    # Extract the location from the request body
-    data = request.get_json()
-    if data and 'location' in data:
-        selected_location = data['location']
-        try:
-            # Convert the string value to the corresponding Location enum member
-            location = Location(selected_location)
-            return "Location updated successfully."
-        except ValueError:
-            return "Invalid location selection.", 400  # Bad request
-
-    return "Error updating location.", 400  # Bad request
+    return update_value('location', Location)
 
 
 @app.route('/set_weather', methods=['POST'])
 @login_required
 def set_weather():
-    global weather
-
-    # Extract the location from the request body
-    data = request.get_json()
-    if data and 'weather' in data:
-        selected_weather = data['weather']
-        try:
-            # Convert the string value to the corresponding Location enum member
-            weather = Weather(selected_weather)
-            return "Weather updated successfully."
-        except ValueError:
-            return "Invalid weather selection.", 400  # Bad request
-
-    return "Error updating weather.", 400  # Bad request
+    return update_value('weather', Weather)
 
 
 @login_manager.user_loader
@@ -535,4 +521,4 @@ if __name__ == "__main__":
 
     # Command to generate the files:
     # openssl req -x509 -newkey rsa:4096 -nodes -out flask_cert.pem -keyout flask_key.pem -days 365
-    app.run(host ='0.0.0.0', ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
+    app.run(host='0.0.0.0', ssl_context=('security/flask_cert.pem', 'security/flask_key.pem'))
