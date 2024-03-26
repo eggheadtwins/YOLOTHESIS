@@ -31,9 +31,8 @@ OVERLAP_THRESHOLD = 1
 # How many times should we poll the luminance sensor for to get an average reading?
 LUMINANCE_RECORDINGS = 5
 
-# Camera location. Manually set this value.
-# Weather conditions. None if indoors. Manually set this value based on the conditions.
-location, weather = None, None
+# Camera location, and weather conditions. These are its default values if none are selected in the flask server.
+location, weather = Location("Indoor"), Weather("Sunny")
 
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
@@ -86,6 +85,7 @@ def update_value(value_name, enum_type):
             selected_value = data[value_name]
             enum_type(selected_value)  # Validate by attempting conversion
             globals()[value_name] = enum_type(selected_value)
+            log.success(f'{value_name.capitalize()} is set to {selected_value.capitalize()}')
             return f"{value_name.capitalize()} updated successfully."
     except ValueError:
         return f"Invalid {value_name} selection.", 400
@@ -158,6 +158,10 @@ def logout():
 @app.route('/video')
 @login_required
 def video():
+    log.warn("""
+If you don't select any option in either Location and Weather form,
+it will default to Location: Indoor, and Weather: Sunny
+""")
     return render_template('video.html')
 
 
@@ -190,7 +194,7 @@ def stream_detect_people():
 
     model = YOLO(MODEL_PATH)
     cap = initialize_video_capture()
-    log.info("Initialized video capture")
+    log.info("Initialized OpenCV capture")
 
     while not running:
         continue
@@ -279,9 +283,7 @@ def get_images():
 @app.route('/start')
 @login_required
 def start():
-    global running, location, weather
-    log.success(f"Location set to {location.value}")
-    log.success(f"Weather set to {weather.value}")
+    global running
     running = True
     return "Server started."
 
