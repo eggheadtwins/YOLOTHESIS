@@ -118,11 +118,14 @@ button[type="submit"]:hover {
 }
 
 .form-container {
-    overflow: hidden; /* Needed for proper float behavior */
+    display: flex;
 }
 
 .form-container form {
-    float: left;
-    width: 5%; /* Adjust width as needed */
-    margin: 0 10px; /* Add spacing between forms */
+    margin-right: 10px;
+}
+
+/* Remove margin from the last form */
+.form-container form:last-child {
+    margin-right: 0;
 }

@@ -16,8 +16,20 @@
     <button class="centered-button" onclick="stopStream()">Stop</button>
 
     <div class="form-container">
+        <form id="mode-form" method="POST" action="/set_mode">
+            <div class="form-group" id="mode-group">
+                <label for="mode">Data collection mode:</label>
+                <select id="mode">
+                    <option value="None">None</option>
+                    <option value="Luminance">Luminance</option>
+                    <option value="Weather">Weather</option>
+                    <option value="Location">Location</option>
+                </select>
+            </div>
+        </form>
+
         <form id="location-form" method="POST" action="/set_location">
-            <div class="form-group">
+            <div class="form-group" id="location-group">
                 <label for="location">Location:</label>
                 <select id="location" name="location">
                     <option value="Indoor">Indoor</option>
@@ -27,7 +39,7 @@
         </form>
 
         <form id="weather-form" method="POST" action="/set_weather">
-            <div class="form-group">
+            <div class="form-group" id="weather-group">
                 <label for="weather">Weather:</label>
                 <select id="weather" name="weather">
                     <option value="Sunny">Sunny</option>

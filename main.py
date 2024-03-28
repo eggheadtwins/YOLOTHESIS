@@ -7,7 +7,7 @@ import time
 import os
 import log
 from log import web_logs
-from conditions import Weather, Location
+from conditions import Weather, Location, Mode
 from flask import Flask, request, redirect, url_for, render_template, make_response, jsonify, Response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,6 +33,9 @@ LUMINANCE_RECORDINGS = 5
 
 # Camera location, and weather conditions. These are its default values if none are selected in the flask server.
 location, weather = Location("Indoor"), Weather("Sunny")
+
+# Data collection mode
+mode = None
 
 # Classes that YOLO model is limited to detect.
 class_names = ["person"]
@@ -83,8 +86,13 @@ def update_value(value_name, enum_type):
         data = request.get_json()
         if data and value_name in data:
             selected_value = data[value_name]
-            enum_type(selected_value)  # Validate by attempting conversion
-            globals()[value_name] = enum_type(selected_value)
+
+            if value_name == 'mode' and selected_value == "None":
+                globals()[value_name] = None
+            else:
+                enum_type(selected_value)  # Validate by attempting conversion
+                globals()[value_name] = enum_type(selected_value)
+
             log.success(f'{value_name.capitalize()} is set to {selected_value.capitalize()}')
             return f"{value_name.capitalize()} updated successfully."
     except ValueError:
@@ -101,6 +109,12 @@ def set_location():
 @login_required
 def set_weather():
     return update_value('weather', Weather)
+
+
+@app.route('/set_mode', methods=['POST'])
+@login_required
+def set_mode():
+    return update_value('mode', Mode)
 
 
 @login_manager.user_loader

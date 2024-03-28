@@ -97,3 +97,53 @@ weatherForm.addEventListener('change', () => {
     }
 
 });
+
+const modeForm = document.getElementById('mode-form');
+modeForm.addEventListener('change', () => {
+    const selectedMode = document.getElementById('mode').value;
+
+    fetch('/set_mode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mode: selectedMode})
+    })
+        .then(response => response.text())
+        .then(data => alert(data)); // Display success or error message
+});
+
+document.getElementById('mode').addEventListener('change', function () {
+    const mode = this.value;
+    const weatherGroup = document.getElementById('weather-group');
+    const locationGroup = document.getElementById('location-group');
+    const locationSelect = document.getElementById('location');
+
+    switch (mode) {
+        case 'Luminance':
+            weatherGroup.style.display = 'none';
+            locationGroup.style.display = 'none';
+            break;
+        case 'Weather':
+            weatherGroup.style.display = 'block';
+            locationGroup.style.display = 'none';
+            locationSelect.value = 'Outdoor';
+            break;
+        case 'Location':
+            weatherGroup.style.display = 'none';
+            locationGroup.style.display = 'block';
+            break;
+        default:
+            weatherGroup.style.display = 'block';
+            locationGroup.style.display = 'block';
+    }
+});
+
+document.getElementById('location').addEventListener('change', function () {
+    const location = this.value;
+    const weatherGroup = document.getElementById('weather-group');
+
+    if (location === 'Indoor') {
+        weatherGroup.style.display = 'none';
+    } else {
+        weatherGroup.style.display = 'block';
+    }
+});

@@ -11,3 +11,9 @@ class Weather(Enum):
     FOG = "Fog"
     SUNNY = "Sunny"
     SNOW = "Snow"
+
+
+class Mode(Enum):
+    LUMINANCE = "Luminance"
+    WEATHER = "Weather"
+    LOCATION = "Location"
